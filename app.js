@@ -2,8 +2,10 @@
 require('dotenv').config()
 const express=require('express');
 const mongoose=require('mongoose');
+//md5 for hashing passwords
+const md5=require('md5');
 const app=express();
-const encrypt=require('mongoose-encryption');
+// const encrypt=require('mongoose-encryption');
 const server='127.0.0.1:27017';
 const db='usersDB';
 // Set EJS as templating engine
@@ -22,10 +24,8 @@ const userSchema=new mongoose.Schema({
     email:String,
     password:String
 });
-//db encryption
-console.log()
-
-userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields: ['password']});
+//db encryption:
+// userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields: ['password']});
 const User=new mongoose.model('User',userSchema);
 
 
@@ -39,7 +39,7 @@ app.get('/login',(req,res)=>{
 })
 app.post('/login',(req,res)=>{
     const username=req.body.username;
-    const ps=req.body.password;
+    const ps=md5(req.body.password);
     User.findOne({email:username},(err,foundRes)=>{
         if(!err){
             if(foundRes){
@@ -61,7 +61,7 @@ app.get('/register',(req,res)=>{
 });
 app.post('/register',(req,res)=>{
     const email=req.body.username;
-    const ps=req.body.password;
+    const ps=md5(req.body.password);
 
     const user=new User({
         email:email,
