@@ -1,9 +1,12 @@
 //jshint esversion:6
 require('dotenv').config()
 const express=require('express');
+//bcrpyt for salting & hashing
+const bcrypt=require('bcrypt');
+const saltRounds = 10;
 const mongoose=require('mongoose');
 //md5 for hashing passwords
-const md5=require('md5');
+// const md5=require('md5');
 const app=express();
 // const encrypt=require('mongoose-encryption');
 const server='127.0.0.1:27017';
@@ -39,15 +42,17 @@ app.get('/login',(req,res)=>{
 })
 app.post('/login',(req,res)=>{
     const username=req.body.username;
-    const ps=md5(req.body.password);
+    // const ps=md5(req.body.password);
     User.findOne({email:username},(err,foundRes)=>{
         if(!err){
             if(foundRes){
-                if(foundRes.password===ps){
-                res.render('secrets');
-            }else{
-                res.send('<h1>incorrect password</h1>');
-            }
+                bcrypt.compare(req.body.password, foundRes.password, function(err, bresult) {
+                    if( bresult === true){
+                        res.render('secrets');
+                    } else{
+                        res.send('<h1>incorrect password</h1>');
+                    }
+                });   
             }else{
                 res.send('<h1>You are not registered.<br> Please <a class="btn btn-light btn-lg" href="/register" role="button">Register</a> here</h1>');
             }
@@ -60,20 +65,24 @@ app.get('/register',(req,res)=>{
     res.render('register');  
 });
 app.post('/register',(req,res)=>{
-    const email=req.body.username;
-    const ps=md5(req.body.password);
+    // const email=req.body.username;
+    // const ps=md5(req.body.password);
 
-    const user=new User({
-        email:email,
-        password:ps
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+        // Store hash in your password DB.
+        const user=new User({
+            email:req.body.username,
+            password:hash
+        });
+        user.save(function(err){
+            if(err){
+                console.log(err);
+            }else{
+                res.render('secrets');
+            }
+        })
     });
-    user.save(function(err){
-        if(err){
-            console.log(err);
-        }else{
-            res.render('secrets');
-        }
-    })
+    
 })
 app.get('/submit',(req,res)=>{
     res.render('submit');  
