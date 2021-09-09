@@ -9,6 +9,7 @@ const session = require('express-session');
 const passport=require('passport');
 const passportLocalMongoose = require('passport-local-mongoose'); 
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+var findOrCreate = require('mongoose-findorcreate')
 //md5 for hashing passwords
 // const md5=require('md5');
 const app=express();
@@ -45,7 +46,7 @@ const userSchema=new mongoose.Schema({
 });
 //to hash and store the ps and save users in the db
 userSchema.plugin(passportLocalMongoose);
-
+userSchema.plugin(findOrCreate);
 //db encryption:
 // userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields: ['password']});
 
