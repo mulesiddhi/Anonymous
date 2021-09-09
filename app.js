@@ -43,7 +43,8 @@ mongoose.connect(`mongodb://${server}/${db}`,{useNewUrlParser:true,useUnifiedTop
 const userSchema=new mongoose.Schema({
     email:String,
     password:String,
-    googleId:String
+    googleId:String,
+    post:String
 });
 //to hash and store the ps and save users in the db
 userSchema.plugin(passportLocalMongoose);
@@ -160,16 +161,47 @@ app.post('/register',(req,res)=>{
 
 app.get('/secrets',(req,res)=>{
    
+    User.find({'post':{$ne:null}},(err,found)=>{
+        if(err){
+            console.log(err)
+        }else{
+            if(found){
+                res.render('secrets',{userSubmit:found});
+            }
+        }
+    })
     //if user is already logged in then render this page or else register page
+    // if(req.isAuthenticated()){
+    //     res.render('secrets'); 
+    // }else{
+    //     res.redirect('/login'); 
+    // }
+})
+
+app.get('/submit',(req,res)=>{
+     
     if(req.isAuthenticated()){
-        res.render('secrets'); 
+        res.render('submit'); 
     }else{
         res.redirect('/login'); 
     }
 })
+app.post('/submit',(req,res)=>{
+    const submittedpost = req.body.secret;
 
-app.get('/submit',(req,res)=>{
-    res.render('submit');  
+    User.findById(req.user.id,function(err,foundUser){
+        if(err){
+            console.log(err);
+        }else{
+            if(foundUser){
+                foundUser.post=submittedpost;
+                foundUser.save(()=>{
+                    res.redirect('/secrets');
+                })
+            }
+        }
+    })
+
 })
 
 app.get('/logout',(req,res)=>{
