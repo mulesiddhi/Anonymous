@@ -42,7 +42,8 @@ mongoose.connect(`mongodb://${server}/${db}`,{useNewUrlParser:true,useUnifiedTop
 
 const userSchema=new mongoose.Schema({
     email:String,
-    password:String
+    password:String,
+    googleId:String
 });
 //to hash and store the ps and save users in the db
 userSchema.plugin(passportLocalMongoose);
@@ -56,8 +57,17 @@ const User=new mongoose.model('User',userSchema);
 
 passport.use(User.createStrategy());
 
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+// passport.serializeUser(User.serializeUser());
+// passport.deserializeUser(User.deserializeUser());
+passport.serializeUser(function(user, done) {
+    done(null, user.id);
+  });
+  
+  passport.deserializeUser(function(id, done) {
+    User.findById(id, function(err, user) {
+      done(err, user);
+    });
+  });
 
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
@@ -168,6 +178,16 @@ app.get('/logout',(req,res)=>{
     res.redirect('/');
 })
 
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile'] })
+  );
+
+app.get('/auth/google/secrets', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    res.redirect('/secrets');
+  });
 app.listen(3000,function(){
     console.log('server running on port 3000');
 })
